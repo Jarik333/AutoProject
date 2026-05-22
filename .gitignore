@@ -1,0 +1,13 @@
+bin/
+obj/
+**/node_modules/
+**/dist/
+**/.angular/
+.env
+*.user
+*.suo
+.vs/
+.idea/
+.DS_Store
+Thumbs.db
+agent-tools/
