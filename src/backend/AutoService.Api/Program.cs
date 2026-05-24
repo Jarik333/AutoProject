@@ -68,6 +68,13 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     await db.Database.MigrateAsync();
+
+    if (app.Environment.IsDevelopment())
+    {
+        await DevelopmentDataSeeder.SeedAsync(
+            db,
+            BCrypt.Net.BCrypt.HashPassword(DevelopmentDataSeeder.DemoPassword));
+    }
 }
 
 if (app.Environment.IsDevelopment())

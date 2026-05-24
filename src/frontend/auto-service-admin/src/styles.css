@@ -22,6 +22,122 @@ a {
   padding: 1.5rem;
 }
 
+.container-wide {
+  max-width: 1200px;
+}
+
+.calendar-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.calendar-toolbar h1 {
+  margin: 0;
+}
+
+.form-actions-stack {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.form-actions-stack button {
+  width: 100%;
+}
+
+.wo-from-appt {
+  margin-top: 0.25rem;
+  padding-top: 0.75rem;
+  border-top: 1px dashed #e0e0e0;
+}
+
+.wo-from-appt-hint {
+  margin: 0.35rem 0 0;
+  font-size: 0.8125rem;
+}
+
+.fc-event-has-work-order {
+  box-shadow: inset 0 0 0 2px #6a1b9a;
+}
+
+.calendar-card {
+  padding: 0.75rem;
+  overflow: hidden;
+}
+
+.calendar-card full-calendar {
+  display: block;
+}
+
+.calendar-card {
+  --fc-border-color: #e0e0e0;
+  --fc-button-bg-color: #1565c0;
+  --fc-button-border-color: #1565c0;
+  --fc-button-hover-bg-color: #0d47a1;
+  --fc-button-hover-border-color: #0d47a1;
+  --fc-button-active-bg-color: #0d47a1;
+  --fc-today-bg-color: #e3f2fd;
+  --fc-event-border-color: transparent;
+  font-size: 0.875rem;
+}
+
+.calendar-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  z-index: 100;
+}
+
+.calendar-panel {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 101;
+  width: min(480px, calc(100vw - 2rem));
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+}
+
+.calendar-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.calendar-panel-header h2 {
+  margin: 0;
+  font-size: 1.125rem;
+}
+
+.wo-link a {
+  font-weight: 600;
+}
+
+.status-badge[data-status='Scheduled'] {
+  background: #e3f2fd;
+  color: #1565c0;
+}
+
+.status-badge[data-status='Confirmed'] {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.status-badge[data-status='Completed'] {
+  background: #eceff1;
+  color: #546e7a;
+}
+
+.status-badge[data-status='Cancelled'] {
+  background: #ffebee;
+  color: #c62828;
+}
+
 .card {
   background: #fff;
   border-radius: 8px;

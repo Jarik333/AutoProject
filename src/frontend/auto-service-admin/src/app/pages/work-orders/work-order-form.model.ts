@@ -133,12 +133,14 @@ function toDateInputValue(date: Date): string {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, '0');
   const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
+  const h = String(date.getHours()).padStart(2, '0');
+  const min = String(date.getMinutes()).padStart(2, '0');
+  return `${y}-${m}-${d}T${h}:${min}`;
 }
 
 function fromDateInputValue(value: string): string | undefined {
   if (!value) return undefined;
-  return new Date(`${value}T00:00:00`).toISOString();
+  return new Date(value).toISOString();
 }
 
 export function validateWorkOrderForm(form: WorkOrderForm): FieldErrors {
@@ -149,12 +151,12 @@ export function validateWorkOrderForm(form: WorkOrderForm): FieldErrors {
   }
 
   if (form.openedAt) {
-    const parsed = new Date(`${form.openedAt}T00:00:00`);
+    const parsed = new Date(form.openedAt);
     if (Number.isNaN(parsed.getTime())) {
-      errors['openedAt'] = 'Некорректная дата';
+      errors['openedAt'] = 'Некорректная дата и время';
     }
   } else {
-    errors['openedAt'] = 'Укажите дату открытия';
+    errors['openedAt'] = 'Укажите дату и время открытия';
   }
 
   optionalMaxLength(errors, 'description', form.description, 'Описание', 4000);

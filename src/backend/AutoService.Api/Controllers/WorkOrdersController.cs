@@ -1,4 +1,5 @@
 using AutoService.Api.Models;
+using AutoService.Api.Services;
 using AutoService.Domain.Entities;
 using AutoService.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authorization;
@@ -38,7 +39,7 @@ public class WorkOrdersController(AppDbContext db) : ControllerBase
     [HttpPost]
     public async Task<ActionResult<WorkOrderDto>> Create(CreateWorkOrderRequest request, CancellationToken ct)
     {
-        var validationError = await ValidateClientAndVehicleAsync(request.ClientId, request.ClientVehicleId, ct);
+        var validationError = await ClientVehicleValidation.ValidateAsync(db, request.ClientId, request.ClientVehicleId, ct);
         if (validationError is not null)
             return validationError;
 
@@ -86,7 +87,7 @@ public class WorkOrdersController(AppDbContext db) : ControllerBase
         if (order is null)
             return NotFound();
 
-        var validationError = await ValidateClientAndVehicleAsync(request.ClientId, request.ClientVehicleId, ct);
+        var validationError = await ClientVehicleValidation.ValidateAsync(db, request.ClientId, request.ClientVehicleId, ct);
         if (validationError is not null)
             return validationError;
 
@@ -126,27 +127,6 @@ public class WorkOrdersController(AppDbContext db) : ControllerBase
             .Include(w => w.Client)
             .Include(w => w.ClientVehicle)
             .Include(w => w.Lines);
-
-    private async Task<ActionResult?> ValidateClientAndVehicleAsync(
-        Guid clientId,
-        Guid? clientVehicleId,
-        CancellationToken ct)
-    {
-        var clientExists = await db.Clients.AnyAsync(c => c.Id == clientId, ct);
-        if (!clientExists)
-            return BadRequest(new { message = "Клиент не найден." });
-
-        if (!clientVehicleId.HasValue)
-            return null;
-
-        var vehicleValid = await db.ClientVehicles
-            .AnyAsync(v => v.Id == clientVehicleId.Value && v.ClientId == clientId, ct);
-
-        if (!vehicleValid)
-            return BadRequest(new { message = "Автомобиль не принадлежит выбранному клиенту." });
-
-        return null;
-    }
 
     private static void ApplyClosedAt(WorkOrder order)
     {

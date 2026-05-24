@@ -13,4 +13,5 @@ public class ClientVehicle
 
     public Client Client { get; set; } = null!;
     public ICollection<WorkOrder> WorkOrders { get; set; } = [];
+    public ICollection<Appointment> Appointments { get; set; } = [];
 }

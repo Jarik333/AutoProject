@@ -2,6 +2,7 @@ import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { ApiService, Client, WorkOrder } from '../../core/api.service';
 import { parseApiError } from '../../core/api-error';
 import { WorkOrderFormFieldsComponent } from './work-order-form-fields.component';
@@ -65,7 +66,7 @@ import {
                       }
                     </div>
                     <div class="client-meta muted">
-                      {{ o.openedAt | date: 'dd.MM.yyyy' }} · {{ formatMoney(o.total) }}
+                      {{ o.openedAt | date: 'dd.MM.yyyy HH:mm' }} · {{ formatMoney(o.total) }}
                     </div>
                   </div>
                   <button
@@ -124,6 +125,7 @@ import {
 })
 export class WorkOrdersComponent implements OnInit {
   private readonly api = inject(ApiService);
+  private readonly route = inject(ActivatedRoute);
 
   readonly orders = signal<WorkOrder[]>([]);
   readonly clients = signal<Client[]>([]);
@@ -159,8 +161,14 @@ export class WorkOrdersComponent implements OnInit {
     this.loading.set(true);
     this.api.getWorkOrders().subscribe({
       next: list => {
-        this.orders.set(list.map(o => ({ ...o, lines: o.lines ?? [] })));
+        const orders = list.map(o => ({ ...o, lines: o.lines ?? [] }));
+        this.orders.set(orders);
         this.loading.set(false);
+        const selected = this.route.snapshot.queryParamMap.get('selected');
+        if (selected) {
+          const order = orders.find(o => o.id === selected);
+          if (order) this.selectOrder(order);
+        }
       },
       error: err => {
         this.loading.set(false);

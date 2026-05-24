@@ -88,6 +88,32 @@ export interface WorkOrderPayload {
   lines?: WorkOrderLineRequest[];
 }
 
+export type AppointmentStatus = 'Scheduled' | 'Confirmed' | 'Completed' | 'Cancelled';
+
+export interface Appointment {
+  id: string;
+  clientId: string;
+  clientName: string;
+  clientVehicleId?: string;
+  vehicleLabel?: string;
+  status: AppointmentStatus;
+  startsAt: string;
+  endsAt: string;
+  notes?: string;
+  workOrderId?: string;
+  workOrderDisplayNumber?: string;
+  createdAt: string;
+}
+
+export interface AppointmentPayload {
+  clientId: string;
+  clientVehicleId?: string;
+  status: AppointmentStatus;
+  startsAt: string;
+  endsAt: string;
+  notes?: string;
+}
+
 export interface RegisterRequest {
   tenantName: string;
   slug: string;
@@ -144,5 +170,30 @@ export class ApiService {
 
   deleteWorkOrder(id: string): Observable<void> {
     return this.http.delete<void>(`${this.base}/workorders/${id}`);
+  }
+
+  getAppointments(from: string, to: string): Observable<Appointment[]> {
+    const params = { from, to };
+    return this.http.get<Appointment[]>(`${this.base}/appointments`, { params });
+  }
+
+  getAppointment(id: string): Observable<Appointment> {
+    return this.http.get<Appointment>(`${this.base}/appointments/${id}`);
+  }
+
+  createAppointment(data: AppointmentPayload): Observable<Appointment> {
+    return this.http.post<Appointment>(`${this.base}/appointments`, data);
+  }
+
+  updateAppointment(id: string, data: AppointmentPayload): Observable<Appointment> {
+    return this.http.put<Appointment>(`${this.base}/appointments/${id}`, data);
+  }
+
+  deleteAppointment(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.base}/appointments/${id}`);
+  }
+
+  createWorkOrderFromAppointment(id: string): Observable<Appointment> {
+    return this.http.post<Appointment>(`${this.base}/appointments/${id}/work-order`, {});
   }
 }

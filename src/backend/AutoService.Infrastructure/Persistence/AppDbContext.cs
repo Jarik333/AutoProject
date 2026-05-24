@@ -21,6 +21,7 @@ public class AppDbContext : DbContext
     public DbSet<ClientVehicle> ClientVehicles => Set<ClientVehicle>();
     public DbSet<WorkOrder> WorkOrders => Set<WorkOrder>();
     public DbSet<WorkOrderLine> WorkOrderLines => Set<WorkOrderLine>();
+    public DbSet<Appointment> Appointments => Set<Appointment>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -87,10 +88,29 @@ public class AppDbContext : DbContext
             e.Property(x => x.UnitPrice).HasPrecision(12, 2);
         });
 
+        modelBuilder.Entity<Appointment>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => new { x.TenantId, x.StartsAt });
+            e.HasIndex(x => x.WorkOrderId).IsUnique();
+            e.Property(x => x.Notes).HasMaxLength(2000);
+            e.Property(x => x.Status).HasConversion<string>().HasMaxLength(32);
+            e.HasOne(x => x.Tenant).WithMany().HasForeignKey(x => x.TenantId);
+            e.HasOne(x => x.Client).WithMany(c => c.Appointments).HasForeignKey(x => x.ClientId)
+                .OnDelete(DeleteBehavior.Restrict);
+            e.HasOne(x => x.ClientVehicle).WithMany(v => v.Appointments).HasForeignKey(x => x.ClientVehicleId)
+                .OnDelete(DeleteBehavior.SetNull);
+            e.HasOne(x => x.WorkOrder).WithOne(w => w.Appointment).HasForeignKey<Appointment>(x => x.WorkOrderId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
         modelBuilder.Entity<Client>().HasQueryFilter(e =>
             _tenantProvider.TenantId == null || e.TenantId == _tenantProvider.TenantId);
 
         modelBuilder.Entity<WorkOrder>().HasQueryFilter(e =>
+            _tenantProvider.TenantId == null || e.TenantId == _tenantProvider.TenantId);
+
+        modelBuilder.Entity<Appointment>().HasQueryFilter(e =>
             _tenantProvider.TenantId == null || e.TenantId == _tenantProvider.TenantId);
     }
 

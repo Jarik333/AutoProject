@@ -15,5 +15,10 @@ export const routes: Routes = [
     canActivate: [authGuard],
     loadComponent: () => import('./pages/work-orders/work-orders.component').then(m => m.WorkOrdersComponent)
   },
+  {
+    path: 'calendar',
+    canActivate: [authGuard],
+    loadComponent: () => import('./pages/calendar/calendar.component').then(m => m.CalendarComponent)
+  },
   { path: '**', redirectTo: 'clients' }
 ];
