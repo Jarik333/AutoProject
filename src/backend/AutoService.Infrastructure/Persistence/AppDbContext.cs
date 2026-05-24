@@ -19,6 +19,8 @@ public class AppDbContext : DbContext
     public DbSet<User> Users => Set<User>();
     public DbSet<Client> Clients => Set<Client>();
     public DbSet<ClientVehicle> ClientVehicles => Set<ClientVehicle>();
+    public DbSet<WorkOrder> WorkOrders => Set<WorkOrder>();
+    public DbSet<WorkOrderLine> WorkOrderLines => Set<WorkOrderLine>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -61,7 +63,34 @@ public class AppDbContext : DbContext
             e.Property(x => x.Vin).HasMaxLength(17);
         });
 
+        modelBuilder.Entity<WorkOrder>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => new { x.TenantId, x.Number }).IsUnique();
+            e.Property(x => x.Description).HasMaxLength(4000);
+            e.Property(x => x.Status).HasConversion<string>().HasMaxLength(32);
+            e.HasOne(x => x.Tenant).WithMany().HasForeignKey(x => x.TenantId);
+            e.HasOne(x => x.Client).WithMany(c => c.WorkOrders).HasForeignKey(x => x.ClientId)
+                .OnDelete(DeleteBehavior.Restrict);
+            e.HasOne(x => x.ClientVehicle).WithMany(v => v.WorkOrders).HasForeignKey(x => x.ClientVehicleId)
+                .OnDelete(DeleteBehavior.SetNull);
+            e.HasMany(x => x.Lines).WithOne(l => l.WorkOrder).HasForeignKey(l => l.WorkOrderId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<WorkOrderLine>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Name).HasMaxLength(500);
+            e.Property(x => x.Type).HasConversion<string>().HasMaxLength(16);
+            e.Property(x => x.Quantity).HasPrecision(12, 3);
+            e.Property(x => x.UnitPrice).HasPrecision(12, 2);
+        });
+
         modelBuilder.Entity<Client>().HasQueryFilter(e =>
+            _tenantProvider.TenantId == null || e.TenantId == _tenantProvider.TenantId);
+
+        modelBuilder.Entity<WorkOrder>().HasQueryFilter(e =>
             _tenantProvider.TenantId == null || e.TenantId == _tenantProvider.TenantId);
     }
 

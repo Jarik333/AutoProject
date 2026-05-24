@@ -35,11 +35,22 @@ label {
   font-size: 0.875rem;
 }
 
+.field-error-host {
+  display: block;
+}
+
+app-field-error + label,
+input + label,
+textarea + label,
+select + label {
+  margin-top: 0.75rem;
+}
+
 input,
 textarea {
   width: 100%;
   padding: 0.5rem 0.75rem;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0;
   border: 1px solid #ccc;
   border-radius: 4px;
 }
@@ -68,6 +79,21 @@ button.danger {
 .error {
   color: #c62828;
   font-size: 0.875rem;
+}
+
+.field-error {
+  color: #c62828;
+  font-size: 0.8125rem;
+  line-height: 1.35;
+  margin: 0.25rem 0 0;
+  padding-bottom: 0.625rem;
+}
+
+input.field-invalid,
+textarea.field-invalid,
+select.field-invalid {
+  border-color: #c62828;
+  outline-color: #c62828;
 }
 
 table {
@@ -208,15 +234,25 @@ nav .spacer {
 .vehicle-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 0 0.75rem;
+  gap: 0.75rem;
+  align-items: start;
 }
 
 .vehicle-grid-wide {
   grid-column: 1 / -1;
 }
 
-.vehicle-grid input {
+.vehicle-grid label {
+  margin-top: 0;
+}
+
+.vehicle-grid input,
+.vehicle-grid select {
   margin-bottom: 0;
+}
+
+.vehicle-grid .field-error {
+  padding-bottom: 0;
 }
 
 .form-actions {
@@ -228,5 +264,136 @@ nav .spacer {
 @media (max-width: 600px) {
   .vehicle-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+select {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 0;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: #fff;
+}
+
+.wo-form-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+  align-items: start;
+}
+
+.wo-form-row label {
+  margin-top: 0;
+}
+
+.wo-form-row input,
+.wo-form-row select {
+  margin-bottom: 0;
+}
+
+.lines-section {
+  margin-top: 0.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px dashed #e0e0e0;
+}
+
+.line-block {
+  background: #f8f9fa;
+  border-radius: 6px;
+  padding: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.line-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+  align-items: start;
+}
+
+.line-grid-wide {
+  grid-column: 1 / -1;
+}
+
+.line-grid label {
+  margin-top: 0;
+}
+
+.line-grid input,
+.line-grid select {
+  margin-bottom: 0;
+}
+
+.line-grid .field-error {
+  padding-bottom: 0;
+}
+
+.line-sum {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  align-self: end;
+  padding-bottom: 0;
+}
+
+.wo-total {
+  text-align: right;
+  margin: 0.5rem 0 0;
+  font-size: 1rem;
+}
+
+.status-badge {
+  display: inline-block;
+  margin-left: 0.5rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  vertical-align: middle;
+}
+
+.status-badge[data-status='Draft'] {
+  background: #eceff1;
+  color: #455a64;
+}
+
+.status-badge[data-status='InProgress'] {
+  background: #fff3e0;
+  color: #e65100;
+}
+
+.status-badge[data-status='Done'] {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.status-badge[data-status='Cancelled'] {
+  background: #ffebee;
+  color: #c62828;
+}
+
+.wo-lines-preview {
+  margin-top: 0.75rem;
+  font-size: 0.875rem;
+}
+
+.wo-lines-preview th {
+  font-weight: 600;
+  color: #666;
+}
+
+.wo-card.selected .wo-lines-preview {
+  margin-bottom: 0;
+}
+
+@media (max-width: 600px) {
+  .wo-form-row,
+  .line-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .line-grid-wide {
+    grid-column: auto;
   }
 }

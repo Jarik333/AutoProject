@@ -1,4 +1,12 @@
 import { Client, ClientVehicleRequest } from '../../core/api.service';
+import {
+  FieldErrors,
+  optionalEmail,
+  optionalMaxLength,
+  optionalVin,
+  optionalYear,
+  requireText
+} from '../../core/form-validation';
 
 export interface VehicleFormRow {
   id?: string;
@@ -73,10 +81,30 @@ export function vehicleLabel(v: {
 
 export function toClientPayload(form: ClientForm) {
   return {
-    fullName: form.fullName,
-    phone: form.phone,
+    fullName: form.fullName.trim(),
+    phone: form.phone.trim(),
     email: form.email.trim() || undefined,
     notes: form.notes.trim() || undefined,
     vehicles: toVehicleRequests(form.vehicles)
   };
+}
+
+export function validateClientForm(form: ClientForm): FieldErrors {
+  const errors: FieldErrors = {};
+  requireText(errors, 'fullName', form.fullName, 'ФИО', 200);
+  requireText(errors, 'phone', form.phone, 'Телефон', 32);
+  optionalEmail(errors, 'email', form.email);
+  optionalMaxLength(errors, 'notes', form.notes, 'Заметки', 2000);
+
+  form.vehicles.forEach((v, i) => {
+    const base = `vehicles.${i}`;
+    requireText(errors, `${base}.make`, v.make, 'Марку', 100);
+    requireText(errors, `${base}.model`, v.model, 'Модель', 100);
+    optionalYear(errors, `${base}.year`, v.year);
+    optionalMaxLength(errors, `${base}.licensePlate`, v.licensePlate, 'Госномер', 20);
+    optionalVin(errors, `${base}.vin`, v.vin);
+    optionalMaxLength(errors, `${base}.notes`, v.notes, 'Заметки', 500);
+  });
+
+  return errors;
 }

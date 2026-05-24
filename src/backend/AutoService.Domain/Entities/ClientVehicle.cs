@@ -12,4 +12,5 @@ public class ClientVehicle
     public string? Notes { get; set; }
 
     public Client Client { get; set; } = null!;
+    public ICollection<WorkOrder> WorkOrders { get; set; } = [];
 }

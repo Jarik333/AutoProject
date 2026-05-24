@@ -11,6 +11,7 @@ import { AuthService } from './core/auth.service';
       <nav>
         <strong>AutoService CRM</strong>
         <a routerLink="/clients">Клиенты</a>
+        <a routerLink="/work-orders">Заказ-наряды</a>
         <span class="spacer"></span>
         <span>{{ auth.user()?.tenantName }}</span>
         <button type="button" class="secondary" (click)="logout()">Выйти</button>

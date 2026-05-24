@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Json.Serialization;
 using AutoService.Api.Middleware;
 using AutoService.Api.Services;
 using AutoService.Infrastructure;
@@ -17,6 +18,7 @@ builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     })
     .ConfigureApiBehaviorOptions(options =>
     {

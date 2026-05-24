@@ -14,4 +14,5 @@ public class Client : ITenantEntity
 
     public Tenant Tenant { get; set; } = null!;
     public ICollection<ClientVehicle> Vehicles { get; set; } = [];
+    public ICollection<WorkOrder> WorkOrders { get; set; } = [];
 }

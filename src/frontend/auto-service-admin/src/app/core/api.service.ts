@@ -42,6 +42,52 @@ export interface ClientPayload {
   vehicles?: ClientVehicleRequest[];
 }
 
+export type WorkOrderStatus = 'Draft' | 'InProgress' | 'Done' | 'Cancelled';
+export type WorkOrderLineType = 'Labor' | 'Part';
+
+export interface WorkOrderLine {
+  id: string;
+  type: WorkOrderLineType;
+  name: string;
+  quantity: number;
+  unitPrice: number;
+  lineTotal: number;
+}
+
+export interface WorkOrderLineRequest {
+  id?: string;
+  type: WorkOrderLineType;
+  name: string;
+  quantity: number;
+  unitPrice: number;
+}
+
+export interface WorkOrder {
+  id: string;
+  number: number;
+  displayNumber: string;
+  clientId: string;
+  clientName: string;
+  clientVehicleId?: string;
+  vehicleLabel?: string;
+  status: WorkOrderStatus;
+  openedAt: string;
+  closedAt?: string;
+  description?: string;
+  createdAt: string;
+  total: number;
+  lines: WorkOrderLine[];
+}
+
+export interface WorkOrderPayload {
+  clientId: string;
+  clientVehicleId?: string;
+  status: WorkOrderStatus;
+  openedAt?: string;
+  description?: string;
+  lines?: WorkOrderLineRequest[];
+}
+
 export interface RegisterRequest {
   tenantName: string;
   slug: string;
@@ -82,5 +128,21 @@ export class ApiService {
 
   deleteClient(id: string): Observable<void> {
     return this.http.delete<void>(`${this.base}/clients/${id}`);
+  }
+
+  getWorkOrders(): Observable<WorkOrder[]> {
+    return this.http.get<WorkOrder[]>(`${this.base}/workorders`);
+  }
+
+  createWorkOrder(data: WorkOrderPayload): Observable<WorkOrder> {
+    return this.http.post<WorkOrder>(`${this.base}/workorders`, data);
+  }
+
+  updateWorkOrder(id: string, data: WorkOrderPayload): Observable<WorkOrder> {
+    return this.http.put<WorkOrder>(`${this.base}/workorders/${id}`, data);
+  }
+
+  deleteWorkOrder(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.base}/workorders/${id}`);
   }
 }

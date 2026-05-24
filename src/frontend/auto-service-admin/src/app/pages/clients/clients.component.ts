@@ -3,10 +3,12 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService, Client } from '../../core/api.service';
 import { ClientFormFieldsComponent } from './client-form-fields.component';
+import { FieldErrors, hasErrors } from '../../core/form-validation';
 import {
   ClientForm,
   emptyClientForm,
   toClientPayload,
+  validateClientForm,
   vehicleLabel,
   vehiclesFromClient
 } from './client-form.model';
@@ -24,8 +26,13 @@ import {
 
       <div class="card" style="margin-bottom: 1.5rem;">
         <h2>Новый клиент</h2>
-        <form (ngSubmit)="addClient()">
-          <app-client-form-fields [form]="createForm" prefix="create" />
+        <form (ngSubmit)="addClient()" novalidate>
+          <app-client-form-fields
+            [form]="createForm"
+            prefix="create"
+            [submitted]="createSubmitted"
+            [errors]="createErrors"
+          />
           <button type="submit" [disabled]="saving()">Добавить</button>
         </form>
       </div>
@@ -67,9 +74,14 @@ import {
                 }
 
                 @if (selectedId() === c.id && editForm) {
-                  <form class="client-edit" (ngSubmit)="saveClient()" (click)="$event.stopPropagation()">
+                  <form class="client-edit" (ngSubmit)="saveClient()" (click)="$event.stopPropagation()" novalidate>
                     <h3>Редактирование</h3>
-                    <app-client-form-fields [form]="editForm" prefix="edit" />
+                    <app-client-form-fields
+                      [form]="editForm"
+                      prefix="edit"
+                      [submitted]="editSubmitted"
+                      [errors]="editErrors"
+                    />
                     <div class="form-actions">
                       <button type="submit" [disabled]="saving()">Сохранить</button>
                       <button type="button" class="secondary" (click)="cancelEdit()">Отмена</button>
@@ -95,6 +107,10 @@ export class ClientsComponent implements OnInit {
 
   createForm: ClientForm = emptyClientForm();
   editForm: ClientForm | null = null;
+  createSubmitted = false;
+  createErrors: FieldErrors = {};
+  editSubmitted = false;
+  editErrors: FieldErrors = {};
 
   readonly vehicleLabel = vehicleLabel;
 
@@ -122,6 +138,8 @@ export class ClientsComponent implements OnInit {
       return;
     }
     this.selectedId.set(client.id);
+    this.editSubmitted = false;
+    this.editErrors = {};
     this.editForm = {
       fullName: client.fullName,
       phone: client.phone,
@@ -134,15 +152,23 @@ export class ClientsComponent implements OnInit {
   cancelEdit(): void {
     this.selectedId.set(null);
     this.editForm = null;
+    this.editSubmitted = false;
+    this.editErrors = {};
   }
 
   addClient(): void {
+    this.createSubmitted = true;
+    this.createErrors = validateClientForm(this.createForm);
+    if (hasErrors(this.createErrors)) return;
+
     this.saving.set(true);
     this.errorMessage.set(null);
     this.api.createClient(toClientPayload(this.createForm)).subscribe({
       next: client => {
         this.clients.update(list => [{ ...client, vehicles: client.vehicles ?? [] }, ...list]);
         this.createForm = emptyClientForm();
+        this.createSubmitted = false;
+        this.createErrors = {};
         this.saving.set(false);
       },
       error: err => {
@@ -155,6 +181,10 @@ export class ClientsComponent implements OnInit {
   saveClient(): void {
     const id = this.selectedId();
     if (!id || !this.editForm) return;
+
+    this.editSubmitted = true;
+    this.editErrors = validateClientForm(this.editForm);
+    if (hasErrors(this.editErrors)) return;
 
     this.saving.set(true);
     this.errorMessage.set(null);
