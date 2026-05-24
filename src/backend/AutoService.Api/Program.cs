@@ -14,6 +14,10 @@ builder.Services.AddScoped<AuthService>();
 builder.Services.AddSingleton<JwtTokenService>();
 
 builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+    })
     .ConfigureApiBehaviorOptions(options =>
     {
         options.InvalidModelStateResponseFactory = context =>

@@ -19,6 +19,8 @@ API можно запускать локально или в Docker:
 docker compose up -d --build api
 ```
 
+После изменений в коде API пересоберите образ: `docker compose up -d --build api`.
+
 API: http://localhost:5080/swagger
 
 ### 2. Backend (локально)
@@ -56,7 +58,7 @@ npm start
 
 1. Откройте http://localhost:4200/register
 2. Создайте автосервис (slug латиницей, например `my-garage`)
-3. Добавьте клиентов на странице «Клиенты»
+3. Добавьте клиентов на странице «Клиенты» (можно указать несколько автомобилей)
 4. В Swagger: `POST /api/auth/login` → скопируйте token → Authorize → `GET /api/clients`
 
 ## Структура

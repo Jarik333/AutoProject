@@ -13,4 +13,5 @@ public class Client : ITenantEntity
     public DateTime CreatedAt { get; set; }
 
     public Tenant Tenant { get; set; } = null!;
+    public ICollection<ClientVehicle> Vehicles { get; set; } = [];
 }

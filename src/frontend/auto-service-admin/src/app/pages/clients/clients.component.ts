@@ -1,25 +1,31 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService, Client } from '../../core/api.service';
+import { ClientFormFieldsComponent } from './client-form-fields.component';
+import {
+  ClientForm,
+  emptyClientForm,
+  toClientPayload,
+  vehicleLabel,
+  vehiclesFromClient
+} from './client-form.model';
 
 @Component({
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, ClientFormFieldsComponent],
   template: `
     <div class="container">
       <h1>Клиенты</h1>
 
+      @if (errorMessage()) {
+        <p class="error" style="margin-bottom: 1rem;">{{ errorMessage() }}</p>
+      }
+
       <div class="card" style="margin-bottom: 1.5rem;">
         <h2>Новый клиент</h2>
         <form (ngSubmit)="addClient()">
-          <label>ФИО</label>
-          <input [(ngModel)]="form.fullName" name="fullName" required />
-          <label>Телефон</label>
-          <input [(ngModel)]="form.phone" name="phone" required />
-          <label>Email</label>
-          <input type="email" [(ngModel)]="form.email" name="email" />
-          <label>Заметки</label>
-          <textarea [(ngModel)]="form.notes" name="notes" rows="2"></textarea>
+          <app-client-form-fields [form]="createForm" prefix="create" />
           <button type="submit" [disabled]="saving()">Добавить</button>
         </form>
       </div>
@@ -30,28 +36,49 @@ import { ApiService, Client } from '../../core/api.service';
         } @else if (clients().length === 0) {
           <p>Клиентов пока нет.</p>
         } @else {
-          <table>
-            <thead>
-              <tr>
-                <th>ФИО</th>
-                <th>Телефон</th>
-                <th>Email</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (c of clients(); track c.id) {
-                <tr>
-                  <td>{{ c.fullName }}</td>
-                  <td>{{ c.phone }}</td>
-                  <td>{{ c.email ?? '—' }}</td>
-                  <td>
-                    <button type="button" class="danger" (click)="remove(c.id)">Удалить</button>
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
+          <div class="client-list">
+            @for (c of clients(); track c.id) {
+              <article
+                class="client-card"
+                [class.selected]="selectedId() === c.id"
+                (click)="selectClient(c)"
+              >
+                <header class="client-card-header">
+                  <div>
+                    <strong>{{ c.fullName }}</strong>
+                    <div class="client-meta">{{ c.phone }} · {{ c.email ?? 'без email' }}</div>
+                  </div>
+                  <button
+                    type="button"
+                    class="danger"
+                    (click)="remove(c.id); $event.stopPropagation()"
+                  >
+                    Удалить
+                  </button>
+                </header>
+                @if (c.vehicles.length > 0) {
+                  <ul class="vehicle-chips">
+                    @for (v of c.vehicles; track v.id) {
+                      <li>{{ vehicleLabel(v) }}</li>
+                    }
+                  </ul>
+                } @else {
+                  <p class="muted">Автомобили не указаны</p>
+                }
+
+                @if (selectedId() === c.id && editForm) {
+                  <form class="client-edit" (ngSubmit)="saveClient()" (click)="$event.stopPropagation()">
+                    <h3>Редактирование</h3>
+                    <app-client-form-fields [form]="editForm" prefix="edit" />
+                    <div class="form-actions">
+                      <button type="submit" [disabled]="saving()">Сохранить</button>
+                      <button type="button" class="secondary" (click)="cancelEdit()">Отмена</button>
+                    </div>
+                  </form>
+                }
+              </article>
+            }
+          </div>
         }
       </div>
     </div>
@@ -63,8 +90,13 @@ export class ClientsComponent implements OnInit {
   readonly clients = signal<Client[]>([]);
   readonly loading = signal(true);
   readonly saving = signal(false);
+  readonly selectedId = signal<string | null>(null);
+  readonly errorMessage = signal<string | null>(null);
 
-  form = { fullName: '', phone: '', email: '', notes: '' };
+  createForm: ClientForm = emptyClientForm();
+  editForm: ClientForm | null = null;
+
+  readonly vehicleLabel = vehicleLabel;
 
   ngOnInit(): void {
     this.load();
@@ -74,34 +106,96 @@ export class ClientsComponent implements OnInit {
     this.loading.set(true);
     this.api.getClients().subscribe({
       next: list => {
-        this.clients.set(list);
+        this.clients.set(list.map(c => ({ ...c, vehicles: c.vehicles ?? [] })));
         this.loading.set(false);
       },
-      error: () => this.loading.set(false)
+      error: err => {
+        this.loading.set(false);
+        this.errorMessage.set(this.formatError(err, 'Не удалось загрузить клиентов'));
+      }
     });
+  }
+
+  selectClient(client: Client): void {
+    if (this.selectedId() === client.id) {
+      this.cancelEdit();
+      return;
+    }
+    this.selectedId.set(client.id);
+    this.editForm = {
+      fullName: client.fullName,
+      phone: client.phone,
+      email: client.email ?? '',
+      notes: client.notes ?? '',
+      vehicles: vehiclesFromClient(client)
+    };
+  }
+
+  cancelEdit(): void {
+    this.selectedId.set(null);
+    this.editForm = null;
   }
 
   addClient(): void {
     this.saving.set(true);
-    this.api.createClient({
-      fullName: this.form.fullName,
-      phone: this.form.phone,
-      email: this.form.email || undefined,
-      notes: this.form.notes || undefined
-    }).subscribe({
+    this.errorMessage.set(null);
+    this.api.createClient(toClientPayload(this.createForm)).subscribe({
       next: client => {
-        this.clients.update(list => [client, ...list]);
-        this.form = { fullName: '', phone: '', email: '', notes: '' };
+        this.clients.update(list => [{ ...client, vehicles: client.vehicles ?? [] }, ...list]);
+        this.createForm = emptyClientForm();
         this.saving.set(false);
       },
-      error: () => this.saving.set(false)
+      error: err => {
+        this.saving.set(false);
+        this.errorMessage.set(this.formatError(err, 'Не удалось создать клиента'));
+      }
+    });
+  }
+
+  saveClient(): void {
+    const id = this.selectedId();
+    if (!id || !this.editForm) return;
+
+    this.saving.set(true);
+    this.errorMessage.set(null);
+    this.api.updateClient(id, toClientPayload(this.editForm)).subscribe({
+      next: client => {
+        this.clients.update(list =>
+          list.map(c => (c.id === client.id ? { ...client, vehicles: client.vehicles ?? [] } : c))
+        );
+        this.cancelEdit();
+        this.saving.set(false);
+      },
+      error: err => {
+        this.saving.set(false);
+        this.errorMessage.set(this.formatError(err, 'Не удалось сохранить клиента'));
+      }
     });
   }
 
   remove(id: string): void {
     if (!confirm('Удалить клиента?')) return;
     this.api.deleteClient(id).subscribe({
-      next: () => this.clients.update(list => list.filter(c => c.id !== id))
+      next: () => {
+        if (this.selectedId() === id) this.cancelEdit();
+        this.clients.update(list => list.filter(c => c.id !== id));
+      },
+      error: err => this.errorMessage.set(this.formatError(err, 'Не удалось удалить клиента'))
     });
+  }
+
+  private formatError(err: unknown, fallback: string): string {
+    if (err instanceof HttpErrorResponse) {
+      const body = err.error as { message?: string; errors?: Record<string, string[]> } | null;
+      if (body?.errors) {
+        const details = Object.values(body.errors).flat().join(' ');
+        if (details) return `${body.message ?? fallback}: ${details}`;
+      }
+      if (body?.message) return body.message;
+      if (err.status === 0) return 'Нет связи с сервером. Запущен ли API?';
+      if (err.status >= 500) return `${fallback} (ошибка сервера)`;
+      return fallback;
+    }
+    return fallback;
   }
 }

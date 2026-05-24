@@ -18,6 +18,7 @@ public class AppDbContext : DbContext
     public DbSet<Tenant> Tenants => Set<Tenant>();
     public DbSet<User> Users => Set<User>();
     public DbSet<Client> Clients => Set<Client>();
+    public DbSet<ClientVehicle> ClientVehicles => Set<ClientVehicle>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -47,6 +48,17 @@ public class AppDbContext : DbContext
             e.Property(x => x.Phone).HasMaxLength(32);
             e.Property(x => x.Email).HasMaxLength(256);
             e.HasOne(x => x.Tenant).WithMany(t => t.Clients).HasForeignKey(x => x.TenantId);
+            e.HasMany(x => x.Vehicles).WithOne(v => v.Client).HasForeignKey(v => v.ClientId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<ClientVehicle>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Make).HasMaxLength(100);
+            e.Property(x => x.Model).HasMaxLength(100);
+            e.Property(x => x.LicensePlate).HasMaxLength(20);
+            e.Property(x => x.Vin).HasMaxLength(17);
         });
 
         modelBuilder.Entity<Client>().HasQueryFilter(e =>
