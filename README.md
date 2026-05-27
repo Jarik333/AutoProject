@@ -40,6 +40,26 @@ Host=localhost;Port=5432;Database=autoservice;Username=autoservice;Password=auto
 
 Миграции применяются автоматически при старте API.
 
+### 2.1 Backend unit-тесты
+
+Тесты находятся в проекте `src/backend/AutoService.Api.Tests` и запускаются по solution:
+
+```bash
+cd src\backend
+dotnet test AutoService.slnx
+```
+
+Тестовый фреймворк: `xUnit` (assertions через `FluentAssertions`, моки через `Moq`).
+
+Покрыты базовые сценарии:
+
+- `AuthService` (`RegisterTenantAsync`, `LoginAsync`) — позитивные и негативные ветки
+- `JwtTokenService` — issuer/audience, claims и срок жизни токена
+- `ClientVehicleValidation` — проверка клиента и принадлежности авто
+- `AuthController` — ветки `Ok` / `Conflict` / `Unauthorized`
+
+Для unit-тестов используется изолированный `EF Core InMemory` контекст на каждый тест.
+
 ### 3. Frontend (Node.js LTS)
 
 Установите Node.js с https://nodejs.org (в PATH должны быть `node` и `npm`). После установки **откройте новый терминал**.
