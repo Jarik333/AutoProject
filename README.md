@@ -60,6 +60,24 @@ dotnet test AutoService.slnx
 
 Для unit-тестов используется изолированный `EF Core InMemory` контекст на каждый тест.
 
+### 2.2 CI (GitHub Actions)
+
+При push и pull request в `main` / `master` запускается workflow [`.github/workflows/ci.yml`](.github/workflows/ci.yml):
+
+- **backend** — `dotnet restore`, `dotnet build`, `dotnet test` по `AutoService.slnx`
+- **frontend** — `npm ci`, `npm run build` в `src/frontend/auto-service-admin`
+
+Статус проверок виден на вкладке **Actions** в GitHub. Локально те же шаги:
+
+```bash
+cd src\backend
+dotnet test AutoService.slnx -c Release
+
+cd ..\frontend\auto-service-admin
+npm ci
+npm run build
+```
+
 ### 3. Frontend (Node.js LTS)
 
 Установите Node.js с https://nodejs.org (в PATH должны быть `node` и `npm`). После установки **откройте новый терминал**.

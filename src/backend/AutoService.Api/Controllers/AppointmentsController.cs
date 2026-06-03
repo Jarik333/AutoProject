@@ -1,9 +1,7 @@
-using System.Text.Json;
 using AutoService.Api.Models;
 using AutoService.Api.Services;
 using AutoService.Domain.Entities;
 using AutoService.Infrastructure.Persistence;
-using AutoService.Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -13,33 +11,8 @@ namespace AutoService.Api.Controllers;
 [ApiController]
 [Authorize]
 [Route("api/[controller]")]
-public class AppointmentsController(AppDbContext db, ITenantProvider tenantProvider) : ControllerBase
+public class AppointmentsController(AppDbContext db) : ControllerBase
 {
-    private const string DebugLogPath = @"d:\Projects\AutoProject\debug-c51442.log";
-
-    private static void AgentLog(string hypothesisId, string location, string message, object data)
-    {
-        // #region agent log
-        try
-        {
-            var line = JsonSerializer.Serialize(new
-            {
-                sessionId = "c51442",
-                hypothesisId,
-                location,
-                message,
-                data,
-                timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
-            });
-            System.IO.File.AppendAllText(DebugLogPath, line + Environment.NewLine);
-        }
-        catch
-        {
-            /* ignore */
-        }
-        // #endregion
-    }
-
     [HttpGet]
     public async Task<ActionResult<IEnumerable<AppointmentDto>>> GetRange(
         [FromQuery] DateTime from,
@@ -53,14 +26,6 @@ public class AppointmentsController(AppDbContext db, ITenantProvider tenantProvi
             .Where(a => a.StartsAt < to && a.EndsAt > from)
             .OrderBy(a => a.StartsAt)
             .ToListAsync(ct);
-
-        AgentLog("E", "AppointmentsController.GetRange", "range result", new
-        {
-            tenantId = tenantProvider.TenantId,
-            from,
-            to,
-            count = appointments.Count
-        });
 
         return Ok(appointments.Select(ToDto));
     }
@@ -80,22 +45,10 @@ public class AppointmentsController(AppDbContext db, ITenantProvider tenantProvi
     [HttpPost]
     public async Task<ActionResult<AppointmentDto>> Create(CreateAppointmentRequest request, CancellationToken ct)
     {
-        AgentLog("F", "AppointmentsController.Create:entry", "create requested", new
-        {
-            tenantId = tenantProvider.TenantId,
-            request.ClientId,
-            request.ClientVehicleId,
-            request.StartsAt,
-            request.EndsAt
-        });
-
         var validationError = await ValidateRequestAsync(request.ClientId, request.ClientVehicleId,
             request.StartsAt, request.EndsAt, ct);
         if (validationError is not null)
-        {
-            AgentLog("C", "AppointmentsController.Create:validation", "validation failed", new { result = validationError.GetType().Name });
             return validationError;
-        }
 
         var appointment = new Appointment
         {
@@ -110,23 +63,7 @@ public class AppointmentsController(AppDbContext db, ITenantProvider tenantProvi
         };
 
         db.Appointments.Add(appointment);
-        try
-        {
-            await db.SaveChangesAsync(ct);
-        }
-        catch (Exception ex)
-        {
-            AgentLog("D", "AppointmentsController.Create:save", "SaveChanges failed", new { ex.Message, exType = ex.GetType().Name });
-            throw;
-        }
-
-        AgentLog("D", "AppointmentsController.Create:saved", "saved ok", new
-        {
-            appointment.Id,
-            appointment.TenantId,
-            appointment.StartsAt,
-            appointment.EndsAt
-        });
+        await db.SaveChangesAsync(ct);
 
         var saved = await QueryWithIncludes()
             .FirstAsync(a => a.Id == appointment.Id, ct);
