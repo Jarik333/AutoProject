@@ -58,7 +58,13 @@ dotnet test AutoService.slnx
 - `ClientVehicleValidation` — проверка клиента и принадлежности авто
 - `AuthController` — ветки `Ok` / `Conflict` / `Unauthorized`
 
+**Integration tests** (`WebApplicationFactory`, InMemory DB):
+
+- `AuthIntegrationTests` — register → login → protected endpoint, 401 без токена
+- `TenantIsolationTests` — tenant A не видит и не изменяет клиентов tenant B (GET/PUT/DELETE → 404)
+
 Для unit-тестов используется изолированный `EF Core InMemory` контекст на каждый тест.
+Integration tests поднимают полный HTTP pipeline с JWT и `TenantMiddleware`.
 
 ### 2.2 CI (GitHub Actions)
 

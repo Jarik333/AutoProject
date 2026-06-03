@@ -16,7 +16,8 @@ export class AuthService {
   readonly user = signal<AuthUser | null>(this.load());
 
   isLoggedIn(): boolean {
-    return this.user() !== null;
+    const u = this.user();
+    return !!u?.token && !this.isTokenExpired(u.token);
   }
 
   setUser(data: AuthUser): void {
@@ -37,9 +38,24 @@ export class AuthService {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
     try {
-      return JSON.parse(raw) as AuthUser;
+      const parsed = JSON.parse(raw) as AuthUser;
+      if (!parsed.token || this.isTokenExpired(parsed.token)) {
+        localStorage.removeItem(STORAGE_KEY);
+        return null;
+      }
+      return parsed;
     } catch {
+      localStorage.removeItem(STORAGE_KEY);
       return null;
+    }
+  }
+
+  isTokenExpired(token: string): boolean {
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1])) as { exp?: number };
+      return typeof payload.exp !== 'number' || payload.exp * 1000 <= Date.now();
+    } catch {
+      return true;
     }
   }
 }

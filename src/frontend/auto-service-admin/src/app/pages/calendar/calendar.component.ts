@@ -163,9 +163,6 @@ export class CalendarComponent implements OnInit {
     this.loading.set(true);
     this.api.getAppointments(this.rangeFrom.toISOString(), this.rangeTo.toISOString()).subscribe({
       next: list => {
-        // #region agent log
-        fetch('http://127.0.0.1:7354/ingest/1382695a-2228-4111-8f0a-09d3b502b9c2',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'c51442'},body:JSON.stringify({sessionId:'c51442',location:'calendar.component.ts:loadAppointments',message:'loaded appointments',data:{count:list.length,from:this.rangeFrom?.toISOString(),to:this.rangeTo?.toISOString(),ids:list.map(a=>a.id)},timestamp:Date.now(),hypothesisId:'E'})}).catch(()=>{});
-        // #endregion
         this.appointments.set(list);
         this.applyEvents(list);
         this.loading.set(false);
@@ -299,9 +296,6 @@ export class CalendarComponent implements OnInit {
   private persistAppointment(andCreateWorkOrder: boolean): void {
     this.submitted = true;
     this.errors = validateAppointmentForm(this.form);
-    // #region agent log
-    fetch('http://127.0.0.1:7354/ingest/1382695a-2228-4111-8f0a-09d3b502b9c2',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'c51442'},body:JSON.stringify({sessionId:'c51442',location:'calendar.component.ts:persistAppointment:entry',message:'persist entry',data:{hasErrors:hasErrors(this.errors),errors:this.errors,editingId:this.editingId(),clientId:this.form.clientId,andCreateWorkOrder},timestamp:Date.now(),hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
     if (hasErrors(this.errors)) return;
 
     const payload = toAppointmentPayload(this.form);
@@ -311,19 +305,12 @@ export class CalendarComponent implements OnInit {
     this.saving.set(true);
     this.errorMessage.set(null);
 
-    // #region agent log
-    fetch('http://127.0.0.1:7354/ingest/1382695a-2228-4111-8f0a-09d3b502b9c2',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'c51442'},body:JSON.stringify({sessionId:'c51442',location:'calendar.component.ts:persistAppointment:request',message:'api request',data:{isNew,id,payload},timestamp:Date.now(),hypothesisId:'B'})}).catch(()=>{});
-    // #endregion
-
     const request = id
       ? this.api.updateAppointment(id, payload)
       : this.api.createAppointment(payload);
 
     request.subscribe({
       next: appt => {
-        // #region agent log
-        fetch('http://127.0.0.1:7354/ingest/1382695a-2228-4111-8f0a-09d3b502b9c2',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'c51442'},body:JSON.stringify({sessionId:'c51442',location:'calendar.component.ts:persistAppointment:success',message:'api success',data:{apptId:appt.id,startsAt:appt.startsAt,endsAt:appt.endsAt,appointmentsCount:this.appointments().length+ (isNew?1:0)},timestamp:Date.now(),hypothesisId:'C'})}).catch(()=>{});
-        // #endregion
         this.applySavedAppointment(appt, isNew);
         this.saving.set(false);
 
@@ -332,10 +319,6 @@ export class CalendarComponent implements OnInit {
         }
       },
       error: err => {
-        // #region agent log
-        const httpErr = err instanceof HttpErrorResponse ? {status:err.status,body:err.error,url:err.url} : {type:String(err)};
-        fetch('http://127.0.0.1:7354/ingest/1382695a-2228-4111-8f0a-09d3b502b9c2',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'c51442'},body:JSON.stringify({sessionId:'c51442',location:'calendar.component.ts:persistAppointment:error',message:'api error',data:httpErr,timestamp:Date.now(),hypothesisId:'B'})}).catch(()=>{});
-        // #endregion
         this.saving.set(false);
         this.errorMessage.set(
           this.formatError(err, id ? 'Не удалось сохранить запись' : 'Не удалось создать запись')

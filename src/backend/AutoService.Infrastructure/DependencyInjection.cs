@@ -13,7 +13,13 @@ public static class DependencyInjection
         services.AddScoped<ITenantProvider, TenantProvider>();
 
         services.AddDbContext<AppDbContext>(options =>
-            options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
+        {
+            var testingDatabaseName = configuration["Testing:DatabaseName"];
+            if (!string.IsNullOrEmpty(testingDatabaseName))
+                options.UseInMemoryDatabase(testingDatabaseName);
+            else
+                options.UseNpgsql(configuration.GetConnectionString("DefaultConnection"));
+        });
 
         return services;
     }
