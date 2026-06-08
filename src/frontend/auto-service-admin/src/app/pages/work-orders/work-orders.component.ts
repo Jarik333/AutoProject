@@ -22,14 +22,34 @@ import {
   imports: [FormsModule, DatePipe, WorkOrderFormFieldsComponent],
   template: `
     <div class="container">
-      <h1>Заказ-наряды</h1>
+      <header class="page-header">
+        <div>
+          <h1>Заказ-наряды</h1>
+          <p class="page-subtitle">Работы, запчасти и статусы выполнения</p>
+        </div>
+        @if (!loading()) {
+          <div class="page-stats">
+            <div class="stat-pill">
+              <span class="stat-pill-value">{{ orders().length }}</span>
+              <span class="stat-pill-label">Всего</span>
+            </div>
+            <div class="stat-pill">
+              <span class="stat-pill-value">{{ activeCount() }}</span>
+              <span class="stat-pill-label">В работе</span>
+            </div>
+          </div>
+        }
+      </header>
 
       @if (errorMessage()) {
-        <p class="error" style="margin-bottom: 1rem;">{{ errorMessage() }}</p>
+        <div class="alert-error">{{ errorMessage() }}</div>
       }
 
-      <div class="card" style="margin-bottom: 1.5rem;">
-        <h2>Новый заказ-наряд</h2>
+      <div class="card section-card">
+        <div class="section-card-header">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><line x1="12" x2="12" y1="18" y2="12"/><line x1="9" x2="15" y1="15" y2="15"/></svg>
+          <h2>Новый заказ-наряд</h2>
+        </div>
         <form (ngSubmit)="addOrder()" novalidate>
           <app-work-order-form-fields
             [form]="createForm"
@@ -38,15 +58,26 @@ import {
             [submitted]="createSubmitted"
             [errors]="createErrors"
           />
-          <button type="submit" [disabled]="saving()">Создать</button>
+          <div class="form-actions form-submit">
+            <button type="submit" [disabled]="saving()">{{ saving() ? 'Создание...' : 'Создать заказ-наряд' }}</button>
+          </div>
         </form>
       </div>
 
       <div class="card">
         @if (loading()) {
-          <p>Загрузка...</p>
+          <div class="skeleton-list">
+            @for (i of [1, 2, 3]; track i) {
+              <div class="skeleton-card"></div>
+            }
+          </div>
         } @else if (orders().length === 0) {
-          <p>Заказ-нарядов пока нет.</p>
+          <div class="empty-state">
+            <div class="empty-state-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>
+            </div>
+            <p>Заказ-нарядов пока нет. Создайте первый или сформируйте из записи в календаре.</p>
+          </div>
         } @else {
           <div class="client-list">
             @for (o of orders(); track o.id) {
@@ -143,6 +174,10 @@ export class WorkOrdersComponent implements OnInit {
 
   readonly statusLabel = statusLabel;
   readonly formatMoney = formatMoney;
+
+  activeCount(): number {
+    return this.orders().filter(o => o.status === 'InProgress' || o.status === 'Draft').length;
+  }
 
   ngOnInit(): void {
     this.loadClients();

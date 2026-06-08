@@ -12,63 +12,107 @@ import { FieldErrors, hasErrors } from '../../core/form-validation';
   standalone: true,
   imports: [FormsModule, RouterLink, FieldErrorComponent],
   template: `
-    <div class="container">
-      <div class="card" style="max-width: 480px; margin: 2rem auto;">
-        <h1>Регистрация автосервиса</h1>
-        <form (ngSubmit)="submit()" novalidate>
-          <label>Название сервиса</label>
-          <input
-            [(ngModel)]="tenantName"
-            name="tenantName"
-            maxlength="200"
-            [class.field-invalid]="invalid('tenantName')"
-          />
-          <app-field-error [message]="err('tenantName')" />
+    <div class="auth-layout">
+      <aside class="auth-brand">
+        <div class="auth-brand-inner">
+          <div class="auth-brand-logo">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+            </svg>
+          </div>
+          <h1>Начните бесплатно</h1>
+          <p class="auth-brand-tagline">
+            Создайте аккаунт автосервиса за минуту. Мультитенантность, изоляция данных, готовые модули CRM.
+          </p>
+          <ul class="auth-features">
+            <li>
+              <span class="auth-feature-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              </span>
+              Изолированные данные для каждого сервиса
+            </li>
+            <li>
+              <span class="auth-feature-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+              </span>
+              Готов к работе сразу после регистрации
+            </li>
+          </ul>
+        </div>
+      </aside>
 
-          <label>Slug (латиница, для URL)</label>
-          <input
-            [(ngModel)]="slug"
-            name="slug"
-            maxlength="100"
-            [class.field-invalid]="invalid('slug')"
-          />
-          <app-field-error [message]="err('slug')" />
+      <main class="auth-form-panel">
+        <div class="auth-card">
+          <h2>Регистрация автосервиса</h2>
+          <p class="auth-card-subtitle">Заполните данные вашего сервиса</p>
 
-          <label>Ваше имя</label>
-          <input
-            [(ngModel)]="fullName"
-            name="fullName"
-            maxlength="200"
-            [class.field-invalid]="invalid('fullName')"
-          />
-          <app-field-error [message]="err('fullName')" />
+          <form (ngSubmit)="submit()" novalidate>
+            <label>Название сервиса</label>
+            <input
+              [(ngModel)]="tenantName"
+              name="tenantName"
+              maxlength="200"
+              placeholder="Мой автосервис"
+              [class.field-invalid]="invalid('tenantName')"
+            />
+            <app-field-error [message]="err('tenantName')" />
 
-          <label>Email</label>
-          <input
-            type="email"
-            [(ngModel)]="email"
-            name="email"
-            maxlength="256"
-            [class.field-invalid]="invalid('email')"
-          />
-          <app-field-error [message]="err('email')" />
+            <label>Slug (латиница, для URL)</label>
+            <input
+              [(ngModel)]="slug"
+              name="slug"
+              maxlength="100"
+              placeholder="my-garage"
+              [class.field-invalid]="invalid('slug')"
+            />
+            <app-field-error [message]="err('slug')" />
 
-          <label>Пароль</label>
-          <input
-            type="password"
-            [(ngModel)]="password"
-            name="password"
-            [class.field-invalid]="invalid('password')"
-          />
-          <app-field-error [message]="err('password')" />
+            <label>Ваше имя</label>
+            <input
+              [(ngModel)]="fullName"
+              name="fullName"
+              maxlength="200"
+              placeholder="Иван Иванов"
+              [class.field-invalid]="invalid('fullName')"
+            />
+            <app-field-error [message]="err('fullName')" />
 
-          @if (error()) {
-            <p class="error">{{ error() }}</p>
-          }
-          <button type="submit" [disabled]="loading()">Создать</button>
-        </form>
-        <p><a routerLink="/login">Уже есть аккаунт</a></p>
-      </div>
+            <label>Email</label>
+            <input
+              type="email"
+              [(ngModel)]="email"
+              name="email"
+              maxlength="256"
+              placeholder="owner@garage.local"
+              [class.field-invalid]="invalid('email')"
+            />
+            <app-field-error [message]="err('email')" />
+
+            <label>Пароль</label>
+            <input
+              type="password"
+              [(ngModel)]="password"
+              name="password"
+              placeholder="••••••••"
+              [class.field-invalid]="invalid('password')"
+            />
+            <app-field-error [message]="err('password')" />
+
+            @if (error()) {
+              <p class="error" style="margin-top: 0.75rem;">{{ error() }}</p>
+            }
+            <div class="form-actions" style="margin-top: 1.25rem;">
+              <button type="submit" [disabled]="loading()" style="width: 100%;">
+                {{ loading() ? 'Создание...' : 'Создать аккаунт' }}
+              </button>
+            </div>
+          </form>
+
+          <p class="auth-footer-link">
+            Уже есть аккаунт? <a routerLink="/login">Войти</a>
+          </p>
+        </div>
+      </main>
     </div>
   `
 })

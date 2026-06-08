@@ -77,6 +77,7 @@ using (var scope = app.Services.CreateScope())
         await DevelopmentDataSeeder.SeedAsync(
             db,
             BCrypt.Net.BCrypt.HashPassword(DevelopmentDataSeeder.DemoPassword));
+        await DevelopmentDataSeeder.RefreshDemoAppointmentsAsync(db);
     }
 }
 

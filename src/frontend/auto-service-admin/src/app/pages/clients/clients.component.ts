@@ -18,14 +18,34 @@ import {
   imports: [FormsModule, ClientFormFieldsComponent],
   template: `
     <div class="container">
-      <h1>Клиенты</h1>
+      <header class="page-header">
+        <div>
+          <h1>Клиенты</h1>
+          <p class="page-subtitle">База клиентов и их автомобилей</p>
+        </div>
+        @if (!loading()) {
+          <div class="page-stats">
+            <div class="stat-pill">
+              <span class="stat-pill-value">{{ clients().length }}</span>
+              <span class="stat-pill-label">Клиентов</span>
+            </div>
+            <div class="stat-pill">
+              <span class="stat-pill-value">{{ vehicleCount() }}</span>
+              <span class="stat-pill-label">Авто</span>
+            </div>
+          </div>
+        }
+      </header>
 
       @if (errorMessage()) {
-        <p class="error" style="margin-bottom: 1rem;">{{ errorMessage() }}</p>
+        <div class="alert-error">{{ errorMessage() }}</div>
       }
 
-      <div class="card" style="margin-bottom: 1.5rem;">
-        <h2>Новый клиент</h2>
+      <div class="card section-card">
+        <div class="section-card-header">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" x2="19" y1="8" y2="14"/><line x1="22" x2="16" y1="11" y2="11"/></svg>
+          <h2>Новый клиент</h2>
+        </div>
         <form (ngSubmit)="addClient()" novalidate>
           <app-client-form-fields
             [form]="createForm"
@@ -33,15 +53,24 @@ import {
             [submitted]="createSubmitted"
             [errors]="createErrors"
           />
-          <button type="submit" [disabled]="saving()">Добавить</button>
+          <button type="submit" [disabled]="saving()">{{ saving() ? 'Сохранение...' : 'Добавить клиента' }}</button>
         </form>
       </div>
 
       <div class="card">
         @if (loading()) {
-          <p>Загрузка...</p>
+          <div class="skeleton-list">
+            @for (i of [1, 2, 3]; track i) {
+              <div class="skeleton-card"></div>
+            }
+          </div>
         } @else if (clients().length === 0) {
-          <p>Клиентов пока нет.</p>
+          <div class="empty-state">
+            <div class="empty-state-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+            </div>
+            <p>Клиентов пока нет. Добавьте первого клиента выше.</p>
+          </div>
         } @else {
           <div class="client-list">
             @for (c of clients(); track c.id) {
@@ -113,6 +142,10 @@ export class ClientsComponent implements OnInit {
   editErrors: FieldErrors = {};
 
   readonly vehicleLabel = vehicleLabel;
+
+  vehicleCount(): number {
+    return this.clients().reduce((sum, c) => sum + c.vehicles.length, 0);
+  }
 
   ngOnInit(): void {
     this.load();

@@ -33,18 +33,26 @@ import {
   imports: [FullCalendarModule, FormsModule, RouterLink, AppointmentFormFieldsComponent],
   template: `
     <div class="container container-wide">
-      <div class="calendar-toolbar">
-        <h1>Календарь записей</h1>
-        <button type="button" (click)="openCreateFromPlus()">+ Запись</button>
-      </div>
+      <header class="page-header calendar-toolbar">
+        <div>
+          <h1>Календарь записей</h1>
+          <p class="page-subtitle">Планирование визитов и привязка к заказ-нарядам</p>
+        </div>
+        <button type="button" (click)="openCreateFromPlus()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><line x1="12" x2="12" y1="5" y2="19"/><line x1="5" x2="19" y1="12" y2="12"/></svg>
+          Новая запись
+        </button>
+      </header>
 
       @if (errorMessage()) {
-        <p class="error" style="margin-bottom: 1rem;">{{ errorMessage() }}</p>
+        <div class="alert-error">{{ errorMessage() }}</div>
       }
 
       <div class="card calendar-card">
         @if (loading()) {
-          <p>Загрузка...</p>
+          <div class="skeleton-list" style="margin-bottom: 0.75rem;">
+            <div class="skeleton-card" style="height: 400px;"></div>
+          </div>
         }
         <full-calendar [options]="calendarOptions()" />
       </div>
@@ -407,12 +415,12 @@ export class CalendarComponent implements OnInit {
 function statusColor(status: Appointment['status']): string {
   switch (status) {
     case 'Confirmed':
-      return '#2e7d32';
+      return '#15803d';
     case 'Completed':
-      return '#546e7a';
+      return '#475569';
     case 'Cancelled':
-      return '#c62828';
+      return '#dc2626';
     default:
-      return '#1565c0';
+      return '#2563eb';
   }
 }

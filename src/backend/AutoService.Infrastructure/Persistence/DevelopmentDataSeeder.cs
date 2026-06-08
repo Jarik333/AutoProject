@@ -52,6 +52,43 @@ public static class DevelopmentDataSeeder
         await db.SaveChangesAsync(ct);
     }
 
+    public static async Task RefreshDemoAppointmentsAsync(AppDbContext db, CancellationToken ct = default)
+    {
+        var tenant = await db.Tenants.FirstOrDefaultAsync(t => t.Slug == DemoSlug, ct);
+        if (tenant is null)
+            return;
+
+        var existing = await db.Appointments.Where(a => a.TenantId == tenant.Id).ToListAsync(ct);
+        if (existing.Count > 0)
+            db.Appointments.RemoveRange(existing);
+
+        var clients = await db.Clients
+            .Include(c => c.Vehicles)
+            .Where(c => c.TenantId == tenant.Id)
+            .OrderBy(c => c.CreatedAt)
+            .ToListAsync(ct);
+
+        if (clients.Count < 4)
+            return;
+
+        var workOrders = await db.WorkOrders
+            .Where(w => w.TenantId == tenant.Id)
+            .OrderBy(w => w.Number)
+            .ToListAsync(ct);
+
+        var appointments = CreateAppointments(tenant.Id, clients, workOrders, DateTime.UtcNow);
+        db.Appointments.AddRange(appointments);
+
+        foreach (var appt in appointments.Where(a => a.WorkOrderId.HasValue))
+        {
+            var order = workOrders.FirstOrDefault(w => w.Id == appt.WorkOrderId);
+            if (order is not null)
+                order.OpenedAt = appt.StartsAt;
+        }
+
+        await db.SaveChangesAsync(ct);
+    }
+
     private static List<Client> CreateClients(Guid tenantId, DateTime now)
     {
         var ivanov = new Client
@@ -257,8 +294,25 @@ public static class DevelopmentDataSeeder
         var wo3 = workOrders[2];
         var wo4 = workOrders[3];
 
-        static DateTime Slot(DateTime baseDate, int dayOffset, int hour, int minute = 0) =>
-            baseDate.Date.AddDays(dayOffset).AddHours(hour).AddMinutes(minute);
+        var moscow = TimeZoneInfo.FindSystemTimeZoneById(
+            OperatingSystem.IsWindows() ? "Russian Standard Time" : "Europe/Moscow");
+
+        static DateTime Slot(
+            TimeZoneInfo tz,
+            DateTime utcNow,
+            int dayOffset,
+            int hour,
+            int minute = 0)
+        {
+            var localToday = TimeZoneInfo.ConvertTimeFromUtc(utcNow, tz).Date;
+            var localStart = localToday.AddDays(dayOffset).AddHours(hour).AddMinutes(minute);
+            return TimeZoneInfo.ConvertTimeToUtc(localStart, tz);
+        }
+
+        DateTime Range(int day, int startHour, int startMin, int endHour, int endMin) =>
+            Slot(moscow, now, day, startHour, startMin);
+
+        var end = (int day, int h, int m) => Slot(moscow, now, day, h, m);
 
         return
         [
@@ -266,14 +320,25 @@ public static class DevelopmentDataSeeder
             {
                 Id = Guid.NewGuid(),
                 TenantId = tenantId,
-                ClientId = sidorova.Id,
-                ClientVehicleId = sidorovaCar.Id,
-                WorkOrderId = wo2.Id,
+                ClientId = ivanov.Id,
+                ClientVehicleId = ivanovCamry.Id,
+                Status = AppointmentStatus.Scheduled,
+                StartsAt = Range(0, 9, 0, 10, 30),
+                EndsAt = end(0, 10, 30),
+                Notes = "Консультация по ТО",
+                CreatedAt = now.AddDays(-1)
+            },
+            new Appointment
+            {
+                Id = Guid.NewGuid(),
+                TenantId = tenantId,
+                ClientId = petrov.Id,
+                ClientVehicleId = petrovCar.Id,
                 Status = AppointmentStatus.Confirmed,
-                StartsAt = Slot(now, -2, 10),
-                EndsAt = Slot(now, -2, 12),
-                Notes = "Клиент ждёт в зале ожидания",
-                CreatedAt = now.AddDays(-5)
+                StartsAt = Range(0, 11, 0, 12, 30),
+                EndsAt = end(0, 12, 30),
+                Notes = "Замена свечей зажигания",
+                CreatedAt = now.AddDays(-1)
             },
             new Appointment
             {
@@ -283,10 +348,46 @@ public static class DevelopmentDataSeeder
                 ClientVehicleId = kozlovBmw.Id,
                 WorkOrderId = wo3.Id,
                 Status = AppointmentStatus.Scheduled,
-                StartsAt = Slot(now, 1, 11),
-                EndsAt = Slot(now, 1, 13),
-                Notes = "Диагностика подвески",
-                CreatedAt = now.AddDays(-1)
+                StartsAt = Range(0, 14, 0, 16, 0),
+                EndsAt = end(0, 16, 0),
+                Notes = "Диагностика подвески, стук спереди",
+                CreatedAt = now
+            },
+            new Appointment
+            {
+                Id = Guid.NewGuid(),
+                TenantId = tenantId,
+                ClientId = sidorova.Id,
+                ClientVehicleId = sidorovaCar.Id,
+                WorkOrderId = wo2.Id,
+                Status = AppointmentStatus.Confirmed,
+                StartsAt = Range(1, 10, 0, 12, 0),
+                EndsAt = end(1, 12, 0),
+                Notes = "Замена передних тормозных колодок",
+                CreatedAt = now
+            },
+            new Appointment
+            {
+                Id = Guid.NewGuid(),
+                TenantId = tenantId,
+                ClientId = ivanov.Id,
+                ClientVehicleId = ivanov.Vehicles.Skip(1).First().Id,
+                Status = AppointmentStatus.Scheduled,
+                StartsAt = Range(1, 15, 0, 16, 30),
+                EndsAt = end(1, 16, 30),
+                Notes = "Проверка ходовой части",
+                CreatedAt = now
+            },
+            new Appointment
+            {
+                Id = Guid.NewGuid(),
+                TenantId = tenantId,
+                ClientId = kozlov.Id,
+                ClientVehicleId = kozlov.Vehicles.Skip(1).First().Id,
+                Status = AppointmentStatus.Scheduled,
+                StartsAt = Range(2, 9, 30, 11, 0),
+                EndsAt = end(2, 11, 0),
+                CreatedAt = now
             },
             new Appointment
             {
@@ -296,8 +397,32 @@ public static class DevelopmentDataSeeder
                 ClientVehicleId = ivanov.Vehicles.Skip(1).First().Id,
                 WorkOrderId = wo4.Id,
                 Status = AppointmentStatus.Scheduled,
-                StartsAt = Slot(now, 3, 14),
-                EndsAt = Slot(now, 3, 16),
+                StartsAt = Range(3, 14, 0, 16, 0),
+                EndsAt = end(3, 16, 0),
+                Notes = "Шиномонтаж, балансировка",
+                CreatedAt = now
+            },
+            new Appointment
+            {
+                Id = Guid.NewGuid(),
+                TenantId = tenantId,
+                ClientId = sidorova.Id,
+                ClientVehicleId = sidorovaCar.Id,
+                Status = AppointmentStatus.Scheduled,
+                StartsAt = Range(4, 10, 0, 11, 30),
+                EndsAt = end(4, 11, 30),
+                Notes = "Компьютерная диагностика",
+                CreatedAt = now
+            },
+            new Appointment
+            {
+                Id = Guid.NewGuid(),
+                TenantId = tenantId,
+                ClientId = petrov.Id,
+                ClientVehicleId = petrovCar.Id,
+                Status = AppointmentStatus.Confirmed,
+                StartsAt = Range(5, 11, 0, 12, 30),
+                EndsAt = end(5, 12, 30),
                 CreatedAt = now
             },
             new Appointment
@@ -307,33 +432,10 @@ public static class DevelopmentDataSeeder
                 ClientId = ivanov.Id,
                 ClientVehicleId = ivanovCamry.Id,
                 Status = AppointmentStatus.Scheduled,
-                StartsAt = Slot(now, 0, 10),
-                EndsAt = Slot(now, 0, 11, 30),
-                Notes = "Консультация по ТО",
-                CreatedAt = now.AddDays(-3)
-            },
-            new Appointment
-            {
-                Id = Guid.NewGuid(),
-                TenantId = tenantId,
-                ClientId = petrov.Id,
-                ClientVehicleId = petrovCar.Id,
-                Status = AppointmentStatus.Scheduled,
-                StartsAt = Slot(now, 0, 15),
-                EndsAt = Slot(now, 0, 16, 30),
-                CreatedAt = now.AddDays(-2)
-            },
-            new Appointment
-            {
-                Id = Guid.NewGuid(),
-                TenantId = tenantId,
-                ClientId = sidorova.Id,
-                ClientVehicleId = sidorovaCar.Id,
-                Status = AppointmentStatus.Completed,
-                StartsAt = Slot(now, -7, 9),
-                EndsAt = Slot(now, -7, 10, 30),
-                Notes = "Замена масла — выполнено",
-                CreatedAt = now.AddDays(-14)
+                StartsAt = Range(6, 16, 0, 17, 30),
+                EndsAt = end(6, 17, 30),
+                Notes = "Запись на следующую неделю",
+                CreatedAt = now
             }
         ];
     }
