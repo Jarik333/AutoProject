@@ -1,3 +1,4 @@
+using AutoService.Api.Observability;
 using AutoService.Api.Models;
 using AutoService.Api.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -13,8 +14,12 @@ public class AuthController(AuthService auth) : ControllerBase
     {
         var result = await auth.RegisterTenantAsync(request, ct);
         if (result is null)
+        {
+            AppMetrics.TenantRegistrations.WithLabels("conflict").Inc();
             return Conflict(new { message = "Сервис с таким slug или email уже существует." });
+        }
 
+        AppMetrics.TenantRegistrations.WithLabels("success").Inc();
         return Ok(result);
     }
 
@@ -23,8 +28,12 @@ public class AuthController(AuthService auth) : ControllerBase
     {
         var result = await auth.LoginAsync(request, ct);
         if (result is null)
+        {
+            AppMetrics.LoginAttempts.WithLabels("failure").Inc();
             return Unauthorized(new { message = "Неверный email или пароль." });
+        }
 
+        AppMetrics.LoginAttempts.WithLabels("success").Inc();
         return Ok(result);
     }
 }

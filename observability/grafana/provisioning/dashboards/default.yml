@@ -1,0 +1,11 @@
+apiVersion: 1
+
+providers:
+  - name: AutoService
+    orgId: 1
+    folder: AutoService
+    type: file
+    disableDeletion: false
+    editable: true
+    options:
+      path: /var/lib/grafana/dashboards

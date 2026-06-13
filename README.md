@@ -84,6 +84,39 @@ npm ci
 npm run build
 ```
 
+### 2.3 Observability (Prometheus + Grafana)
+
+API экспортирует метрики через [prometheus-net](https://github.com/prometheus-net/prometheus-net) на endpoint `/metrics` (без авторизации).
+
+**HTTP-метрики:** RPS, latency (p50/p95), коды ответов.
+
+**Бизнес-метрики:**
+
+| Метрика | Описание |
+|---------|----------|
+| `autoservice_login_attempts_total{result}` | Успешные / неудачные входы |
+| `autoservice_tenant_registrations_total{result}` | Регистрации tenant |
+| `autoservice_clients_created_total` | Созданные клиенты |
+| `autoservice_appointments_created_total` | Созданные записи |
+| `autoservice_work_orders_created_total{source}` | Заказ-наряды (`api` / `appointment`) |
+
+Запуск стека с мониторингом:
+
+```bash
+cd d:\Projects\AutoProject
+docker compose up -d --build
+```
+
+| Сервис | URL |
+|--------|-----|
+| Prometheus | http://localhost:9090 |
+| Grafana | http://localhost:3000 (логин `admin` / `admin`) |
+| Метрики API | http://localhost:5080/metrics |
+
+В Grafana автоматически подключается datasource Prometheus и дашборд **AutoService API** (папка AutoService): request rate, latency, 5xx, логины, бизнес-события.
+
+Локальный API без Docker: добавьте target в `observability/prometheus/prometheus.yml` (например `host.docker.internal:5000` на Windows).
+
 ### 3. Frontend (Node.js LTS)
 
 Установите Node.js с https://nodejs.org (в PATH должны быть `node` и `npm`). После установки **откройте новый терминал**.
@@ -138,12 +171,14 @@ npm start
 ## Структура
 
 ```
-src/backend/     — .NET API (Domain, Infrastructure, Api)
-src/frontend/    — Angular admin
+src/backend/        — .NET API (Domain, Infrastructure, Api)
+src/frontend/       — Angular admin
+observability/      — Prometheus, Grafana (конфиги и дашборды)
 docker-compose.yml
 ```
 
 ## Дальше по плану
 
+- Elasticsearch + Kibana (централизованные логи)
 - Telegram-бот для клиентов
 - Подписки и лимиты

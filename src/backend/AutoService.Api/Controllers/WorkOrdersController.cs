@@ -1,3 +1,4 @@
+using AutoService.Api.Observability;
 using AutoService.Api.Models;
 using AutoService.Api.Services;
 using AutoService.Domain.Entities;
@@ -68,6 +69,8 @@ public class WorkOrdersController(AppDbContext db) : ControllerBase
         db.WorkOrders.Add(order);
         await db.SaveChangesAsync(ct);
         await transaction.CommitAsync(ct);
+
+        AppMetrics.WorkOrdersCreated.WithLabels("api").Inc();
 
         var saved = await QueryWithIncludes()
             .FirstAsync(w => w.Id == order.Id, ct);

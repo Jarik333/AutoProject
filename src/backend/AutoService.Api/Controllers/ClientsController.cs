@@ -1,3 +1,4 @@
+using AutoService.Api.Observability;
 using AutoService.Api.Models;
 
 using AutoService.Domain.Entities;
@@ -114,7 +115,7 @@ public class ClientsController(AppDbContext db) : ControllerBase
 
         await db.SaveChangesAsync(ct);
 
-
+        AppMetrics.ClientsCreated.Inc();
 
         var saved = await db.Clients
 

@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
+using Prometheus;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddInfrastructure(builder.Configuration);
@@ -88,10 +89,12 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors("Admin");
+app.UseHttpMetrics();
 app.UseAuthentication();
 app.UseMiddleware<TenantMiddleware>();
 app.UseAuthorization();
 app.MapControllers();
+app.MapMetrics();
 
 app.Run();
 

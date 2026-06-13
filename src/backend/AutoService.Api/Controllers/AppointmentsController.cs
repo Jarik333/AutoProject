@@ -1,3 +1,4 @@
+using AutoService.Api.Observability;
 using AutoService.Api.Models;
 using AutoService.Api.Services;
 using AutoService.Domain.Entities;
@@ -64,6 +65,8 @@ public class AppointmentsController(AppDbContext db) : ControllerBase
 
         db.Appointments.Add(appointment);
         await db.SaveChangesAsync(ct);
+
+        AppMetrics.AppointmentsCreated.Inc();
 
         var saved = await QueryWithIncludes()
             .FirstAsync(a => a.Id == appointment.Id, ct);
@@ -161,6 +164,8 @@ public class AppointmentsController(AppDbContext db) : ControllerBase
 
         await db.SaveChangesAsync(ct);
         await transaction.CommitAsync(ct);
+
+        AppMetrics.WorkOrdersCreated.WithLabels("appointment").Inc();
 
         var saved = await QueryWithIncludes()
             .FirstAsync(a => a.Id == appointment.Id, ct);
